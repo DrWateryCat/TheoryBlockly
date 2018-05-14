@@ -1,0 +1,60 @@
+plugins {
+    id "org.jetbrains.kotlin.jvm" version "1.2.21"
+    id "eclipse"
+    id "idea"
+    id "jaci.openrio.gradle.GradleRIO" version "2018.03.06"
+}
+
+def TEAM = 2186
+def ROBOT_CLASS = "frc.team2186.robot.Robot"
+
+ext.kotlin_version = "1.2.21"
+ext.ktor_version = "0.9.2"
+
+deploy {
+    targets {
+        target("roborio", jaci.openrio.gradle.frc.RoboRIO) {
+            team = TEAM
+        }
+    }
+    artifacts {
+        // We still use FRCJavaArtifact since kotlin does respond as a Java build.
+        artifact('frcKotlin', jaci.openrio.gradle.frc.FRCJavaArtifact) {
+            targets << "roborio"
+            jar = 'jar'
+        }
+    }
+}
+
+repositories {
+    mavenCentral()
+    jcenter()
+    maven { url  "http://dl.bintray.com/kotlin/ktor" }
+    maven { url "https://dl.bintray.com/kotlin/kotlinx" }
+}
+
+dependencies {
+    compile wpilib()
+    compile ctre()
+    compile navx()
+
+    compile "org.jetbrains.kotlin:kotlin-stdlib:$kotlin_version"
+    compile "org.jetbrains.kotlinx:kotlinx-coroutines-core:0.21"
+    compile 'com.google.code.gson:gson:2.8.2'
+    compile "io.ktor:ktor-network:$ktor_version"
+}
+
+jar {
+    from configurations.compile.collect { it.isDirectory() ? it : zipTree(it) }
+    manifest jaci.openrio.gradle.GradleRIOPlugin.javaManifest(ROBOT_CLASS)
+}
+
+task wrapper(type: Wrapper) {
+    gradleVersion = '4.4'
+}
+
+kotlin {
+    experimental {
+        coroutines "enable"
+    }
+}
